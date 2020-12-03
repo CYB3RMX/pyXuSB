@@ -83,7 +83,7 @@ class MainForm(npyscreen.FormBaseNew):
 			npyscreen.notify_confirm(
 				f"Burning {self.isoFile.value} to {self.diskParts.values[self.diskParts.value]}"
 			)
-			command = f"dd bs=4M if={self.isoFile.value} of=someEmpty.dd conv=fdatasync status=none"
+			command = f"dd bs=4M if={self.isoFile.value} of=/dev/{self.diskParts.values[self.diskParts.value]} conv=fdatasync status=none"
 			os.system(command)
 			while True:
 				if "dd" in (proc.name() for proc in psutil.process_iter()):
