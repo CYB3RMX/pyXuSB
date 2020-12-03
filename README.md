@@ -9,6 +9,7 @@
 # Updates
 <b>04/12/2020</b>
 - [x] README is fixed.
+- [x] Bug fixes.
 
 # Setup
 <b>Necessary python modules</b>
