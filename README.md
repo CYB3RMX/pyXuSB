@@ -4,7 +4,10 @@
 - [x] Usage: ```sudo python3 pyXuSB.py```
 
 # Screenshot
-![Screen](Screenshot.png)
+![Screen](.animations/Screenshot.png)
+
+# Usage
+![animation](.animations/usb.gif)
 
 # Updates
 <b>04/12/2020</b>
