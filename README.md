@@ -1,5 +1,4 @@
 # pyXuSB
-A dd command based bootable usb maker for linux with TUI.
 <img src="https://img.shields.io/badge/-Linux-black?style=for-the-badge&logo=Linux&logoColor=white"> <img src="https://img.shields.io/badge/-Python-black?style=for-the-badge&logo=python&logoColor=white">
 
 - [x] Usage: ```sudo python3 pyXuSB.py```
