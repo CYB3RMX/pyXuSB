@@ -10,11 +10,14 @@
 ![animation](.animations/usb.gif)
 
 # Updates
-<b>04/12/2020</b>
-- [x] README is fixed.
+<b>07/12/2020</b>
+- [x] UI is a little bit changed.
+- [x] Added ```USB format/fix``` button. Now you can repair your partitions.
 - [x] Bug fixes.
 
 # Setup
 <b>Necessary python modules</b>
 - ```npyscreen``` => <i>Creating TUI.</i>
 - ```psutil``` => <i>Enumerating disk partitions</i>
+
+<b>Installation of python modules</b>: ```sudo pip3 install -r requirements.txt```
