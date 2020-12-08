@@ -10,10 +10,8 @@
 ![animation](.animations/usb.gif)
 
 # Updates
-<b>07/12/2020</b>
-- [x] UI is a little bit changed.
-- [x] Added ```USB format/fix``` button. Now you can repair your partitions.
-- [x] Bug fixes.
+<b>08/12/2020</b>
+- [x] Critical bug: ```Process handling``` is fixed. Now you can flash your ISO files successfully.
 
 # Setup
 <b>Necessary python modules</b>

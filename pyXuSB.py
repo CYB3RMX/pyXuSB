@@ -92,11 +92,20 @@ class MainForm(npyscreen.FormBaseNew):
                 fixmeee = ['mkfs.msdos', f'/dev/{self.diskParts.values[self.diskParts.value]}'.strip('\n')]
                 cmd1 = Popen(fixmeee, stderr=PIPE, stdout=PIPE)
 
-                # Notification
-                npyscreen.notify_confirm(
-                    "Partition: "+ f"/dev/{self.diskParts.values[self.diskParts.value]}".strip('\n') + " is successfully formatted.",
-                    "Notification"
-                )
+                # Check if mkfs process is finished
+                job_finished = False
+                while True:
+                    for proc in psutil.process_iter():
+                        if proc.name() == "mkfs.msdos":
+                            if proc.status() == "zombie":
+                                proc.kill()
+                                npyscreen.notify_confirm(
+                                    "Partition: "+ f"/dev/{self.diskParts.values[self.diskParts.value]}".strip('\n') + " is successfully formatted.",
+                                    "Notification"
+                                )
+                                job_finished = True
+                                if job_finished:
+                                    return
             except:
                 npyscreen.notify_wait(
                     "Please specify a correct partition to format!!", "Notification"
@@ -127,22 +136,39 @@ class MainForm(npyscreen.FormBaseNew):
             # Make sure target USB driver is completely formatted :)
             cmdline = ['mkfs.msdos', f'/dev/{self.diskParts.values[self.diskParts.value]}'.strip('\n')]
             command1 = Popen(cmdline, stderr=PIPE, stdout=PIPE)
-            npyscreen.notify_confirm(
-                f"Created unallocated partition on /dev/{self.diskParts.values[self.diskParts.value]}"
+            npyscreen.notify_wait(
+                f"Created unallocated partition on /dev/{self.diskParts.values[self.diskParts.value]}",
+                "Notification"
             )
 
             # Then start burning
-            npyscreen.notify_confirm(
-                f"Burning {self.isoFile.value} to /dev/{self.diskParts.values[self.diskParts.value]}\nIt will take a while. Please wait!!"
+            npyscreen.notify_wait(
+                f"Burning {self.isoFile.value} to /dev/{self.diskParts.values[self.diskParts.value]}\nIt will take a while. Please wait!!",
+                "Notification"
             )
             try:
                 cmdline = ['dd', 'bs=4M', f'if={self.isoFile.value}'.strip('\n'), f'of=/dev/{self.diskParts.values[self.diskParts.value]}'.strip('\n'),
                         'conv=fdatasync,noerror', 'status=none']
                 command2 = Popen(cmdline, stderr=PIPE, stdout=PIPE)
-                npyscreen.notify_confirm(
-                    "ISO burning is completed. Now you can use your USB ;)",
-                    "Notification"
-                )
+
+                # Check if dd process is finished
+                job_finished = False
+                while True:
+                    for proc in psutil.process_iter():
+                        if proc.name() == "dd":
+                            if proc.status() == "zombie":
+                                proc.kill()
+                                npyscreen.notify_confirm(
+                                    "ISO burning is completed. Now you can use your USB ;)",
+                                    "Notification"
+                                )
+                                job_finished = True
+                                if job_finished:
+                                    return
+                            else:
+                                pass
+                        else:
+                            pass
             except:
                 sys.exit(1)
         else:
