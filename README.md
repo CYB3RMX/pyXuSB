@@ -16,6 +16,6 @@
 # Setup
 <b>Necessary python modules</b>
 - ```npyscreen``` => <i>Creating TUI.</i>
-- ```psutil``` => <i>Enumerating disk partitions</i>
+- ```psutil``` => <i>Handling processes such as dd and mkfs.</i>
 
 <b>Installation of python modules</b>: ```sudo pip3 install -r requirements.txt```
