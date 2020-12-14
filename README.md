@@ -10,12 +10,22 @@
 ![animation](.animations/usb.gif)
 
 # Updates
-<b>08/12/2020</b>
-- [x] Critical bug: ```Process handling``` is fixed. Now you can flash your ISO files successfully.
+<b>14/12/2020</b>
+- [x] Added Windows pendrive creating option!! Now you can create Windows pendrives easily ;)
+- [x] UI is a little bit changed
 
 # Setup
 <b>Necessary python modules</b>
 - ```npyscreen``` => <i>Creating TUI.</i>
 - ```psutil``` => <i>Handling processes such as dd and mkfs.</i>
 
-<b>Installation of python modules</b>: ```sudo pip3 install -r requirements.txt```
+<b>Installation of python modules</b>: ```sudo pip3 install -r requirements.txt```<br>
+<b>Gathering other dependencies</b>:
+- ```gettext```: sudo apt-get install gettext
+- ```ms-sys```: ```http://ms-sys.sourceforge.net/```
+
+<b>MS-SYS Installation</b>:
+- ```tar -zxvf ms-sys*.tgz```
+- ```cd ms-sys```
+- ```make```
+- ```sudo make install```
