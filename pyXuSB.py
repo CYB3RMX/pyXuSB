@@ -17,6 +17,7 @@ try:
     command = "lsblk -o name -n -s -l > parts.txt"
     os.system(command)
     partitions = open("parts.txt", "r").readlines()
+    os.remove("parts.txt")
 except:
     print("[!] An error occured while enumerating disk partitions.")
     sys.exit(1)
@@ -31,7 +32,7 @@ def copytree(source, destination, symlinks=False, ignore=None):
         else:
             shutil.copy2(so, de)
 
-# An inputbox
+# An inputbox for entering ISO files
 class IsoFileInput(npyscreen.BoxTitle):
     _contained_widget = npyscreen.MultiLineEdit
 
@@ -41,6 +42,7 @@ class MainForm(npyscreen.FormBaseNew):
         # Getting terminal resolution
         self.y, self.x = self.useable_space()
 
+            # ---------- INPUT AREA ---------- #
         # Getting path of the iso file
         self.isoFile = self.add(
             IsoFileInput, name='Enter >Path< of the ISO image:',
@@ -57,17 +59,26 @@ class MainForm(npyscreen.FormBaseNew):
             npyscreen.TitleCombo, name='Select USB partition',
             values=partitions, rely=10
         )
+            # ---------- BUTTONS AREA ---------- #
         # Creating start button that does iso burning
         self.add(
-            npyscreen.ButtonPress, name="Start Burning!!",
+            npyscreen.ButtonPress, name="Start!!",
             when_pressed_function=self.Burner, relx=20,
             rely=15
         )
         # Creating button that repairs USB drivers
         self.add(
-            npyscreen.ButtonPress, name="Format/Fix USB!!",
+            npyscreen.ButtonPress, name="Format/Fix USB",
             when_pressed_function=self.FixUsb, relx=20
         )
+        # Creating install button that installs pyXuSB on system
+        if os.path.exists("/usr/bin/pyXuSB"):
+            pass
+        else:
+            self.add(
+                npyscreen.ButtonPress, name="Install pyXuSB",
+                when_pressed_function=self.InstallUsb, relx=20
+            )
         # Creating exit button
         self.add(
             npyscreen.ButtonPress, name="Qu1t pyXuSB",
@@ -85,16 +96,39 @@ class MainForm(npyscreen.FormBaseNew):
         # If user selects YES then clean up and exit
         if exiting:
             self.parentApp.setNextForm(None)
-            if os.path.exists("parts.txt"):
-                os.remove("parts.txt")
             sys.exit(0)
         else:
             pass
 
+    # Defining function that copies pyXuSB to /usr/bin/
+    def InstallUsb(self):
+        npyscreen.notify_wait("Installing pyXuSB on your system...", "NOTIFICATION")
+        try:
+            # If there is old version of pyXuSB then remove it.
+            if os.path.exists("/usr/bin/pyXuSB"):
+                npyscreen.notify_wait("Removing existing pyXuSB", "PROGRESS")
+                remove = ['rm', '-rf', '/usr/bin/pyXuSB']
+                command = Popen(remove, stderr=PIPE, stdout=PIPE)
+                command.wait()
+                npyscreen.notify_wait("pyXuSB was successfully removed.", "NOTIFICATION")
+            else:
+                pass
+
+            # Installation zone
+            install = ['cp', 'pyXuSB.py', '/usr/bin/pyXuSB']
+            command = Popen(install, stderr=PIPE, stdout=PIPE)
+            command.wait()
+            npyscreen.notify_confirm("Installation finished :)", "NOTIFICATION")
+        except:
+            npyscreen.notify_wait("An error occured while installing pyXuSB", "ERROR")
+
     # Defining function that formats USB drivers to msdos filesystem
     def FixUsb(self):
-        # Parsing target partition and ISO file
-        burnPart = str(self.diskParts.values[self.diskParts.value].replace('\n', ''))
+        # Parsing target partition
+        try:
+            burnPart = str(self.diskParts.values[self.diskParts.value].replace('\n', ''))
+        except:
+            pass
 
         # Asking to user
         question = npyscreen.notify_yes_no(
@@ -106,7 +140,7 @@ class MainForm(npyscreen.FormBaseNew):
                 # Wiping all data on target USB drive
                 npyscreen.notify_wait(
                     f"Wiping all data on /dev/{burnPart}",
-                    "NOTIFICATION"
+                    "PROGRESS"
                 )
                 unalloc = ['wipefs', '--all', f'/dev/{burnPart}']
                 cmd1 = Popen(unalloc, stderr=PIPE, stdout=PIPE)
@@ -115,7 +149,7 @@ class MainForm(npyscreen.FormBaseNew):
                 # Creating msdos label on target USB drive
                 npyscreen.notify_wait(
                     f"Creating MSDOS label on /dev/{burnPart}",
-                    "NOTIFICATION"
+                    "PROGRESS"
                 )
                 labelz = ['parted', '--script', f'/dev/{burnPart}', 'mklabel', 'msdos']
                 cmd1 = Popen(labelz, stderr=PIPE, stdout=PIPE)
@@ -124,7 +158,7 @@ class MainForm(npyscreen.FormBaseNew):
                 # Creating msdos filesystem on target USB drive
                 npyscreen.notify_wait(
                     f"Creating MSDOS file system on /dev/{burnPart}",
-                    "NOTIFICATION"
+                    "PROGRESS"
                 )
                 fixmeee = ['mkfs.msdos', f'/dev/{burnPart}', '-I']
                 cmd1 = Popen(fixmeee, stderr=PIPE, stdout=PIPE)
@@ -137,7 +171,7 @@ class MainForm(npyscreen.FormBaseNew):
                 )
             except:
                 npyscreen.notify_wait(
-                    "Please specify a correct partition to format!!", "NOTIFICATION"
+                    "Please specify a correct partition to format!!", "ERROR"
                 )
         else:
             pass
@@ -145,8 +179,11 @@ class MainForm(npyscreen.FormBaseNew):
     # Defining function that handles Start burning button
     def Burner(self):
         # Parsing target partition and ISO file
-        burnPart = str(self.diskParts.values[self.diskParts.value].replace('\n', ''))
-        burnISO = str(self.isoFile.value.replace('\n', ''))
+        try:
+            burnPart = str(self.diskParts.values[self.diskParts.value].replace('\n', ''))
+            burnISO = str(self.isoFile.value.replace('\n', ''))
+        except:
+            pass
 
         # Checking existence for target file
         if os.path.exists(self.isoFile.value):
@@ -163,136 +200,139 @@ class MainForm(npyscreen.FormBaseNew):
             editw=2
         )
         if question:
-            # ---------- WINDOWS PENDRIVE ----------
-            if str(self.OsType.values[self.OsType.value].strip('\n')) == "Windows Pendrive":
-                npyscreen.notify_wait("Creating Windows pendrive...", "NOTIFICATION")
+            try:
+                # ---------- WINDOWS PENDRIVE ----------
+                if str(self.OsType.values[self.OsType.value].strip('\n')) == "Windows Pendrive":
+                    npyscreen.notify_wait("Creating Windows pendrive...", "NOTIFICATION")
 
-                # Wiping all data
-                npyscreen.notify_wait(f"Wiping all data on /dev/{burnPart}", "PROGRESS")
-                wiper = ['wipefs', '--all', f'/dev/{burnPart}']
-                command = Popen(wiper, stderr=PIPE, stdout=PIPE)
-                command.wait()
-
-                # Creating msdos label on target USB drive
-                npyscreen.notify_wait(f"Creating MSDOS label on /dev/{burnPart}", "PROGRESS")
-                labelz = ['parted', '--script', f'/dev/{burnPart}', 'mklabel', 'msdos']
-                command = Popen(labelz, stderr=PIPE, stdout=PIPE)
-                command.wait()
-
-                # Creating partition on target USB drive
-                npyscreen.notify_wait(f"Creating partition on /dev/{burnPart}", "PROGRESS")
-                mkparts = ['parted', '--script', f'/dev/{burnPart}', 'mkpart', 'primary', 'ntfs', '1MB', '8000MB'] # This is default value for 8GB USB drives
-                command = Popen(mkparts, stderr=PIPE, stdout=PIPE)
-                command.wait()
-
-                # Creating NTFS file system on target USB drive
-                try:
-                    npyscreen.notify_wait(f"Creating NTFS file system on /dev/{burnPart}1", "PROGRESS")
-                    createNtfs = ['mkfs.ntfs', '--quick', f'/dev/{burnPart}1']
-                    command = Popen(createNtfs, stderr=PIPE, stdout=PIPE)
-                    command.wait()
-                except Exception as e:
-                    npyscreen.notify_confirm(f"{e}")
-                    sys.exit(1)
-
-                # Mounting file systems to copy
-                try:
-                    # First: mounting target ISO file to /mnt
-                    npyscreen.notify_wait(f"Mounting {burnISO} to /mnt", "PROGRESS")
-                    mounts = ['mount', f'{burnISO}', '/mnt']
-                    command = Popen(mounts, stderr=PIPE, stdout=PIPE)
+                    # Wiping all data
+                    npyscreen.notify_wait(f"Wiping all data on /dev/{burnPart}", "PROGRESS")
+                    wiper = ['wipefs', '--all', f'/dev/{burnPart}']
+                    command = Popen(wiper, stderr=PIPE, stdout=PIPE)
                     command.wait()
 
-                    # Second: mounting target partition to /media
-                    npyscreen.notify_wait(f"Mounting /dev/{burnPart}1 to /media", "PROGRESS")
-                    mounts = ['mount', f'/dev/{burnPart}1', '/media']
-                    command = Popen(mounts, stderr=PIPE, stdout=PIPE)
-                    command.wait()
-                except:
-                    npyscreen.notify_confirm("An error occured while mounting files. Quitting!!", "ERROR")
-                    sys.exit(1)
-
-                # Copy time !!!
-                npyscreen.notify_wait("Copying files to target partition. It will take a while!!", "WAIT")
-                copytree("/mnt", "/media")
-
-                # Syncing all
-                npyscreen.notify_wait("Syncing all data. Please wait!!", "WAIT")
-                syncing = ['sync']
-                command = Popen(syncing, stderr=PIPE, stdout=PIPE)
-                command.wait()
-
-                try:
-                    # Writing Microsoft boot records
-                    npyscreen.notify_wait(f"Writing Windows boot record to /dev/{burnPart}1", "PROGRESS")
-                    writeboo = ['ms-sys', '-n', f'/dev/{burnPart}1']
-                    command = Popen(writeboo, stderr=PIPE, stdout=PIPE)
+                    # Creating msdos label on target USB drive
+                    npyscreen.notify_wait(f"Creating MSDOS label on /dev/{burnPart}", "PROGRESS")
+                    labelz = ['parted', '--script', f'/dev/{burnPart}', 'mklabel', 'msdos']
+                    command = Popen(labelz, stderr=PIPE, stdout=PIPE)
                     command.wait()
 
-                    # Writing Windows MBR to given partition
-                    npyscreen.notify_wait(f"Writing Windows MBR to /dev/{burnPart}", "PROGRESS")
-                    writembr = ['ms-sys', '-7', f'/dev/{burnPart}']
-                    command = Popen(writembr, stderr=PIPE, stdout=PIPE)
+                    # Creating partition on target USB drive
+                    npyscreen.notify_wait(f"Creating partition on /dev/{burnPart}", "PROGRESS")
+                    mkparts = ['parted', '--script', f'/dev/{burnPart}', 'mkpart', 'primary', 'ntfs', '1MB', '8000MB'] # This is default value for 8GB USB drives
+                    command = Popen(mkparts, stderr=PIPE, stdout=PIPE)
                     command.wait()
-                except:
-                    npyscreen.notify_confirm(
-                        "An error occured while writing boot records.\nMake sure you have >ms-sys< installed correctly.",
-                        "ERROR"
-                    )
-                    sys.exit(1)
 
-                # Syncing all again
-                npyscreen.notify_wait("Syncing all data. Please wait!!", "PROGRESS")
-                command = Popen(syncing, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                    # Creating NTFS file system on target USB drive
+                    try:
+                        npyscreen.notify_wait(f"Creating NTFS file system on /dev/{burnPart}1", "PROGRESS")
+                        createNtfs = ['mkfs.ntfs', '--quick', f'/dev/{burnPart}1']
+                        command = Popen(createNtfs, stderr=PIPE, stdout=PIPE)
+                        command.wait()
+                    except Exception as e:
+                        npyscreen.notify_confirm(f"{e}", "ERROR")
+                        sys.exit(1)
 
-                # Enabling boot flag
-                npyscreen.notify_wait(f"Enabling boot flag on /dev/{burnPart}", "PROGRESS")
-                bootflag = ['parted', '--script', f'/dev/{burnPart}', 'set', '1', 'boot', 'on']
-                command = Popen(bootflag, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                    # Mounting file systems to copy
+                    try:
+                        # First: mounting target ISO file to /mnt
+                        npyscreen.notify_wait(f"Mounting {burnISO} to /mnt", "PROGRESS")
+                        mounts = ['mount', f'{burnISO}', '/mnt']
+                        command = Popen(mounts, stderr=PIPE, stdout=PIPE)
+                        command.wait()
 
-                # Umounting target USB partition
-                npyscreen.notify_wait(f"Umounting /dev/{burnPart}1", "PROGRESS")
-                umount = ['umount', f'/dev/{burnPart}1']
-                command = Popen(umount, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                        # Second: mounting target partition to /media
+                        npyscreen.notify_wait(f"Mounting /dev/{burnPart}1 to /media", "PROGRESS")
+                        mounts = ['mount', f'/dev/{burnPart}1', '/media']
+                        command = Popen(mounts, stderr=PIPE, stdout=PIPE)
+                        command.wait()
+                    except:
+                        npyscreen.notify_confirm("An error occured while mounting files. Quitting!!", "ERROR")
+                        sys.exit(1)
 
-                # Umounting target ISO file and finish
-                npyscreen.notify_wait(f"Umounting {burnISO}", "PROGRESS")
-                umount = ['umount', '/mnt']
-                command = Popen(umount, stderr=PIPE, stdout=PIPE)
-                command.wait()
-                npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
+                    # Copy time !!!
+                    npyscreen.notify_wait("Copying files to target partition. It will take a while!!", "WAIT")
+                    copytree("/mnt", "/media")
 
-            else:
-                # ---------- LINUX PENDRIVE ----------
-                npyscreen.notify_wait("Creating Linux pendrive...", "NOTIFICATION")
+                    # Syncing all
+                    npyscreen.notify_wait("Syncing all data. Please wait!!", "WAIT")
+                    syncing = ['sync']
+                    command = Popen(syncing, stderr=PIPE, stdout=PIPE)
+                    command.wait()
 
-                # Wiping all data
-                npyscreen.notify_wait(f"Wiping all data on /dev/{burnPart}", "PROGRESS")
-                wiper = ['wipefs', '--all', f'/dev/{burnPart}']
-                command = Popen(wiper, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                    try:
+                        # Writing Microsoft boot records
+                        npyscreen.notify_wait(f"Writing Windows boot record to /dev/{burnPart}1", "PROGRESS")
+                        writeboo = ['ms-sys', '-n', f'/dev/{burnPart}1']
+                        command = Popen(writeboo, stderr=PIPE, stdout=PIPE)
+                        command.wait()
 
-                # Creating loop label on target USB drive
-                npyscreen.notify_wait(f"Creating LOOP label on /dev/{burnPart}", "PROGRESS")
-                labelz = ['parted', '--script', f'/dev/{burnPart}', 'mklabel', 'loop']
-                command = Popen(labelz, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                        # Writing Windows MBR to given partition
+                        npyscreen.notify_wait(f"Writing Windows MBR to /dev/{burnPart}", "PROGRESS")
+                        writembr = ['ms-sys', '-7', f'/dev/{burnPart}']
+                        command = Popen(writembr, stderr=PIPE, stdout=PIPE)
+                        command.wait()
+                    except:
+                        npyscreen.notify_confirm(
+                            "An error occured while writing boot records.\nMake sure you have >ms-sys< installed correctly.",
+                            "ERROR"
+                        )
+                        sys.exit(1)
 
-                # Creating ext4 file system on target USB drive
-                npyscreen.notify_wait(f"Creating EXT4 file system on /dev/{burnPart}", "PROGRESS")
-                cmdline = ['mkfs.ext4', f'/dev/{burnPart}']
-                command = Popen(cmdline, stderr=PIPE, stdout=PIPE)
-                command.wait()
+                    # Syncing all again
+                    npyscreen.notify_wait("Syncing all data. Please wait!!", "PROGRESS")
+                    command = Popen(syncing, stderr=PIPE, stdout=PIPE)
+                    command.wait()
 
-                # Copying files from ISO to target partition
-                npyscreen.notify_wait(f"Burning {burnISO} to /dev/{burnPart}.\nIt will take a while!!", "WAIT")
-                cmdline = ['dd', 'bs=4M', f'if={burnISO}', f'of=/dev/{burnPart}', 'status=none', 'oflag=sync']
-                command = Popen(cmdline, stderr=PIPE, stdout=PIPE)
-                command.wait()
-                npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
+                    # Enabling boot flag
+                    npyscreen.notify_wait(f"Enabling boot flag on /dev/{burnPart}", "PROGRESS")
+                    bootflag = ['parted', '--script', f'/dev/{burnPart}', 'set', '1', 'boot', 'on']
+                    command = Popen(bootflag, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Umounting target USB partition
+                    npyscreen.notify_wait(f"Umounting /dev/{burnPart}1", "PROGRESS")
+                    umount = ['umount', f'/dev/{burnPart}1']
+                    command = Popen(umount, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Umounting target ISO file and finish
+                    npyscreen.notify_wait(f"Umounting {burnISO}", "PROGRESS")
+                    umount = ['umount', '/mnt']
+                    command = Popen(umount, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+                    npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
+
+                else:
+                    # ---------- LINUX PENDRIVE ----------
+                    npyscreen.notify_wait("Creating Linux pendrive...", "NOTIFICATION")
+
+                    # Wiping all data
+                    npyscreen.notify_wait(f"Wiping all data on /dev/{burnPart}", "PROGRESS")
+                    wiper = ['wipefs', '--all', f'/dev/{burnPart}']
+                    command = Popen(wiper, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Creating loop label on target USB drive
+                    npyscreen.notify_wait(f"Creating LOOP label on /dev/{burnPart}", "PROGRESS")
+                    labelz = ['parted', '--script', f'/dev/{burnPart}', 'mklabel', 'loop']
+                    command = Popen(labelz, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Creating ext4 file system on target USB drive
+                    npyscreen.notify_wait(f"Creating EXT4 file system on /dev/{burnPart}", "PROGRESS")
+                    cmdline = ['mkfs.ext4', f'/dev/{burnPart}']
+                    command = Popen(cmdline, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Copying files from ISO to target partition
+                    npyscreen.notify_wait(f"Burning {burnISO} to /dev/{burnPart}.\nIt will take a while!!", "WAIT")
+                    cmdline = ['dd', 'bs=4M', f'if={burnISO}', f'of=/dev/{burnPart}', 'status=none', 'oflag=sync']
+                    command = Popen(cmdline, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+                    npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
+            except:
+                npyscreen.notify_confirm("Please specify pendrive type and target partition!!", "ERROR")
         else:
             pass
 
@@ -314,9 +354,6 @@ if __name__ == '__main__':
     try:
         app = MainApp()
         app.run()
-        if os.path.exists("parts.txt"):
-            os.remove("parts.txt")
     except KeyboardInterrupt:
         print("[+] Goodbye...")
-        if os.path.exists("parts.txt"):
-            os.remove("parts.txt")
+        sys.exit(0)

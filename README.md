@@ -10,9 +10,9 @@
 ![animation](.animations/usb.gif)
 
 # Updates
-<b>14/12/2020</b>
-- [x] Added Windows pendrive creating option!! Now you can create Windows pendrives easily. ;)
+<b>15/12/2020</b>
 - [x] UI is a little bit changed.
+- [x] Added ```Install``` button. Now you can install pyXuSB on your system.
 
 # Setup
 <b>Necessary python modules</b>
@@ -21,8 +21,8 @@
 
 <b>Installation of python modules</b>: ```sudo pip3 install -r requirements.txt```<br>
 <b>Gathering other dependencies</b>:
-- ```gettext```: ```sudo apt-get install gettext```
-- ```ms-sys```: ```http://ms-sys.sourceforge.net/```
+- <b>gettext</b>: ```sudo apt-get install gettext```
+- <b>ms-sys</b>: ```http://ms-sys.sourceforge.net/```
 
 <b>MS-SYS Installation</b>:
 - ```tar -zxvf ms-sys*.tgz```
