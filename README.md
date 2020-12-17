@@ -10,9 +10,9 @@
 ![animation](.animations/usb.gif)
 
 # Updates
-<b>15/12/2020</b>
-- [x] UI is a little bit changed.
-- [x] Added ```Install``` button. Now you can install pyXuSB on your system.
+<b>17/12/2020</b>
+- [x] Critical bug: Fixed bugs on file mounting options.
+- [x] Coming soon: Windows pendrive creating for GPT disk type.
 
 # Setup
 <b>Necessary python modules</b>

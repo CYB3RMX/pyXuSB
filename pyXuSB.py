@@ -235,15 +235,20 @@ class MainForm(npyscreen.FormBaseNew):
 
                     # Mounting file systems to copy
                     try:
-                        # First: mounting target ISO file to /mnt
-                        npyscreen.notify_wait(f"Mounting {burnISO} to /mnt", "PROGRESS")
-                        mounts = ['mount', f'{burnISO}', '/mnt']
+                        # First: mounting target partition to /mnt
+                        npyscreen.notify_wait(f"Mounting /dev/{burnPart}1 to /mnt", "PROGRESS")
+                        mounts = ['mount', f'/dev/{burnPart}1', '/mnt']
                         command = Popen(mounts, stderr=PIPE, stdout=PIPE)
                         command.wait()
 
-                        # Second: mounting target partition to /media
-                        npyscreen.notify_wait(f"Mounting /dev/{burnPart}1 to /media", "PROGRESS")
-                        mounts = ['mount', f'/dev/{burnPart}1', '/media']
+                        # Second: Creating WindowsData directory for holding Windows files.
+                        create = ['mkdir', '/tmp/WindowsData']
+                        command = Popen(create, stderr=PIPE, stdout=PIPE)
+                        command.wait()
+
+                        # Third: mounting ISO file to /tmp/WindowsData
+                        npyscreen.notify_wait(f"Mounting {burnISO} to /tmp/WindowsData", "PROGRESS")
+                        mounts = ['mount', f'{burnISO}', '/tmp/WindowsData']
                         command = Popen(mounts, stderr=PIPE, stdout=PIPE)
                         command.wait()
                     except:
@@ -252,7 +257,7 @@ class MainForm(npyscreen.FormBaseNew):
 
                     # Copy time !!!
                     npyscreen.notify_wait("Copying files to target partition. It will take a while!!", "WAIT")
-                    copytree("/mnt", "/media")
+                    copytree("/tmp/WindowsData", "/mnt")
 
                     # Syncing all
                     npyscreen.notify_wait("Syncing all data. Please wait!!", "WAIT")
@@ -296,10 +301,15 @@ class MainForm(npyscreen.FormBaseNew):
                     command = Popen(umount, stderr=PIPE, stdout=PIPE)
                     command.wait()
 
-                    # Umounting target ISO file and finish
+                    # Umounting target ISO file
                     npyscreen.notify_wait(f"Umounting {burnISO}", "PROGRESS")
-                    umount = ['umount', '/mnt']
+                    umount = ['umount', '/tmp/WindowsData']
                     command = Popen(umount, stderr=PIPE, stdout=PIPE)
+                    command.wait()
+
+                    # Removing WindowsData folder and finish.
+                    removv = ['rm', '-rf', '/tmp/WindowsData']
+                    command = Popen(removv, stderr=PIPE, stdout=PIPE)
                     command.wait()
                     npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
 
@@ -332,7 +342,7 @@ class MainForm(npyscreen.FormBaseNew):
                     command.wait()
                     npyscreen.notify_confirm("Now you can use your USB ;)", "NOTIFICATION")
             except:
-                npyscreen.notify_confirm("Please specify pendrive type and target partition!!", "ERROR")
+                npyscreen.notify_confirm(f"Please specify pendrive type and target partition!!", "ERROR")
         else:
             pass
 
